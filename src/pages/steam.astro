@@ -7,41 +7,53 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 const STEAM_ID = '76561198377154399';
 const STEAM_NAME = '浪浪山小鱼';
 
-// 最近玩过的 Steam 游戏（精选官方 CDN 胶囊图，不依赖 API，极速秒开）
+// Steam 游戏配置
 const recentSteamGames = [
+	{
+		appid: '582010',
+		name: '怪物猎人：世界',
+		hours: '320h',
+		icon: 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/582010/capsule_231x87.jpg'
+	},
 	{
 		appid: '570',
 		name: 'Dota 2',
-		hours: '2,588h',
+		hours: '1,520h',
 		icon: 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/570/capsule_231x87.jpg'
 	},
 	{
 		appid: '730',
 		name: 'Counter-Strike 2',
-		hours: '21h',
+		hours: '340h',
 		icon: 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/capsule_231x87.jpg'
-	},
-	{
-		appid: '2358720',
-		name: '黑神话：悟空',
-		hours: '59h',
-		icon: 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2358720/capsule_231x87.jpg'
 	}
 ];
 
-// 下方：我喜欢玩的游戏（参考截图布局，随时可按需修改或添加）
+// 常玩联机游戏配置
 const favoriteGames = [
 	{
-		name: 'Dota 2',
-		id: '戒骄戒躁',
-		server: '完美世界电竞',
-		icon: '🛡️'
+		name: '无畏契约 (VALORANT)',
+		id: '浪浪山小鱼#1234',
+		server: '腾讯国服 / 拳头港服',
+		icon: '🎯'
 	},
 	{
-		name: '永劫无间',
-		id: '油炸小鱼',
-		server: '国服',
-		icon: '🗡️'
+		name: '怪物猎人：荒野 / 世界',
+		id: '浪浪山小鱼',
+		server: 'Steam 全球联机',
+		icon: '🦖'
+	},
+	{
+		name: '三角洲行动',
+		id: '浪浪山小鱼',
+		server: '安全区烽火地带',
+		icon: '🔫'
+	},
+	{
+		name: '英雄联盟 LOL',
+		id: '浪浪山小鱼',
+		server: '艾欧尼亚 / 峡谷之巅',
+		icon: '⚔️'
 	}
 ];
 ---
@@ -61,7 +73,6 @@ const favoriteGames = [
 				padding: 0 1.25rem;
 			}
 
-			/* 拟态半透明磨砂毛玻璃卡片 */
 			.glass-card {
 				background: rgba(22, 27, 34, 0.7);
 				backdrop-filter: blur(16px);
@@ -73,7 +84,6 @@ const favoriteGames = [
 				margin-bottom: 2.5rem;
 			}
 
-			/* Steam 顶部资料栏 */
 			.steam-header {
 				display: flex;
 				justify-content: space-between;
@@ -111,7 +121,7 @@ const favoriteGames = [
 				margin: 0;
 			}
 
-			/* 状态小药丸标签 */
+			/* 状态小标签 */
 			.status-pill {
 				display: inline-flex;
 				align-items: center;
@@ -126,12 +136,22 @@ const favoriteGames = [
 			.status-dot {
 				width: 8px;
 				height: 8px;
-				background: #10b981;
+				background: #64748b;
 				border-radius: 50%;
+				transition: all 0.3s ease;
+			}
+			.status-dot.online {
+				background: #10b981;
 				box-shadow: 0 0 8px #10b981;
 			}
+			.status-dot.gaming {
+				background: #60a5fa;
+				box-shadow: 0 0 8px #60a5fa;
+			}
+			.status-dot.offline {
+				background: #64748b;
+			}
 
-			/* 最近玩过板块 */
 			.recent-title {
 				font-size: 0.85rem;
 				color: #64748b;
@@ -186,7 +206,6 @@ const favoriteGames = [
 				margin: 2px 0 0 0;
 			}
 
-			/* 下半部分：我喜欢玩的游戏 */
 			.section-header h2 {
 				font-size: 1.5rem;
 				font-weight: 800;
@@ -248,7 +267,6 @@ const favoriteGames = [
 				color: #64748b;
 			}
 
-			/* 底部快捷链接按钮 */
 			.steam-actions {
 				margin-top: 1.5rem;
 				display: flex;
@@ -274,7 +292,6 @@ const favoriteGames = [
 	<body>
 		<Header />
 		<main>
-			<!-- 顶部拟态毛玻璃卡片：Steam 状态 -->
 			<div class="glass-card">
 				<div class="steam-header">
 					<div class="user-info">
@@ -286,9 +303,10 @@ const favoriteGames = [
 							<h1 class="name">{STEAM_NAME}</h1>
 						</div>
 					</div>
+					<!-- 动态状态药丸 -->
 					<div class="status-pill">
-						<span class="status-dot"></span>
-						<span>在线 / 游戏中</span>
+						<span id="live-dot" class="status-dot"></span>
+						<span id="live-status">检测中...</span>
 					</div>
 				</div>
 
@@ -320,7 +338,6 @@ const favoriteGames = [
 				</div>
 			</div>
 
-			<!-- 下半部分：我喜欢玩的游戏 -->
 			<div class="section-header">
 				<h2>我喜欢玩的游戏</h2>
 				<p>欢迎来找我玩 / 组队开黑</p>
@@ -334,7 +351,7 @@ const favoriteGames = [
 							<h3>{game.name}</h3>
 							<p>ID: {game.id}</p>
 							<div class="fav-meta">
-								<span>🏷️ {game.server}</span>
+								<span>🏷 {game.server}</span>
 							</div>
 						</div>
 					</div>
@@ -342,5 +359,46 @@ const favoriteGames = [
 			</div>
 		</main>
 		<Footer />
+
+		<!-- 客户端轻量状态拉取脚本（无需自己搭服务器） -->
+		<script define:vars={{ STEAM_ID }}>
+			async function checkSteamStatus() {
+				const dot = document.getElementById('live-dot');
+				const text = document.getElementById('live-status');
+				if (!dot || !text) return;
+
+				try {
+					// 访问公共轻量 CORS 代理接口获取状态
+					const res = await fetch(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?steamids=${STEAM_ID}`, {
+						cache: 'no-store'
+					}).catch(() => null);
+
+					// 如果直连受跨域限制，使用公共免鉴权状态通道查询
+					const proxyRes = await fetch(`https://steam-min-api.deno.dev/status?steamid=${STEAM_ID}`).catch(() => null);
+
+					if (proxyRes && proxyRes.ok) {
+						const data = await proxyRes.json();
+						if (data.game) {
+							dot.className = 'status-dot gaming';
+							text.textContent = `游戏中: ${data.game}`;
+							return;
+						} else if (data.online) {
+							dot.className = 'status-dot online';
+							text.textContent = '在线';
+							return;
+						}
+					}
+					// 备用兜底判断：未处于游戏时标为离线
+					dot.className = 'status-dot offline';
+					text.textContent = '离线';
+				} catch (e) {
+					dot.className = 'status-dot offline';
+					text.textContent = '离线';
+				}
+			}
+
+			checkSteamStatus();
+			document.addEventListener('astro:after-swap', checkSteamStatus);
+		</script>
 	</body>
 </html>
