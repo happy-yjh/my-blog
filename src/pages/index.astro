@@ -12,19 +12,19 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 		<style>
 			.hero-section {
 				padding: 2rem 0;
-				border-bottom: 1px solid #f1f5f9;
+				border-bottom: 1px solid var(--card-border);
 				margin-bottom: 2rem;
 			}
 			.hero-title {
 				font-size: 2.2rem;
 				font-weight: 800;
-				color: #0f172a;
+				color: var(--heading-color);
 				margin-bottom: 0.8rem;
 				line-height: 1.2;
 			}
 			.hero-subtitle {
 				font-size: 1.15rem;
-				color: #475569;
+				color: var(--text-color);
 				line-height: 1.6;
 			}
 			.badges {
@@ -34,9 +34,10 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 				margin-top: 1.2rem;
 			}
 			.badge {
-				background: #f1f5f9;
-				color: #334155;
-				padding: 4px 10px;
+				background: var(--card-bg);
+				border: 1px solid var(--card-border);
+				color: var(--text-color);
+				padding: 4px 12px;
 				border-radius: 9999px;
 				font-size: 0.85rem;
 				font-weight: 500;
@@ -50,38 +51,41 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 			.nav-card {
 				display: block;
 				padding: 16px 20px;
-				border: 1px solid #e2e8f0;
+				border: 1px solid var(--card-border);
 				border-radius: 10px;
 				text-decoration: none;
 				color: inherit;
-				background: #ffffff;
+				background: var(--card-bg);
 				transition: all 0.2s ease;
 			}
 			.nav-card:hover {
 				transform: translateY(-3px);
-				box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-				border-color: #2563eb;
+				box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+				border-color: var(--accent);
 			}
 			.nav-card h3 {
 				margin: 0 0 6px 0;
 				font-size: 1.1rem;
-				color: #2563eb;
+				color: var(--accent);
 			}
 			.nav-card p {
 				margin: 0;
 				font-size: 0.88rem;
-				color: #64748b;
+				color: var(--text-color);
 				line-height: 1.4;
 			}
 			.section-heading {
 				font-size: 1.35rem;
 				font-weight: 700;
-				color: #1e293b;
-				margin-top: 1rem;
+				color: var(--heading-color);
+				margin-top: 1.5rem;
 			}
 			.bio-text {
-				color: #334155;
+				color: var(--text-color);
 				line-height: 1.7;
+			}
+			.bio-text strong {
+				color: var(--heading-color);
 			}
 		</style>
 	</head>
@@ -114,7 +118,7 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 					<p>精选的开发文档、实用工具与设计资源。</p>
 				</a>
 				<a href="/tools" class="nav-card">
-					<h3>🛠️ 在线小工具</h3>
+					<h3>🛠️️ 在线小工具</h3>
 					<p>自己编写的高效轻量网页小工具。</p>
 				</a>
 			</div>
