@@ -4,9 +4,10 @@
   --heading-color: #0f172a;
   --card-bg: #ffffff;
   --card-border: #e2e8f0;
-  --header-bg: rgba(255, 255, 255, 0.85);
+  --header-bg: #ffffff;
   --code-bg: #e2e8f0;
   --code-text: #0f172a;
+  --accent: #2563eb;
 }
 
 html.dark {
@@ -15,50 +16,31 @@ html.dark {
   --heading-color: #f8fafc;
   --card-bg: #1e293b;
   --card-border: #334155;
-  --header-bg: rgba(15, 23, 42, 0.85);
+  --header-bg: #0f172a;
   --code-bg: #334155;
   --code-text: #f1f5f9;
+  --accent: #3b82f6;
 }
 
-/* 让 body 和标题直接绑定主题变量，平滑过渡 */
 body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  margin: 0;
+  padding: 0;
+  text-align: left;
   background-color: var(--bg-color);
   color: var(--text-color);
+  font-size: 16px;
+  line-height: 1.75;
   transition: background-color 0.25s ease, color 0.25s ease;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4, h5, h6 {
   color: var(--heading-color);
-}
-
-:not(pre) > code {
-  background-color: var(--code-bg);
-  color: var(--code-text);
-}
-
-/* 引入现代系统字体族与优化阅读行高 */
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
-  margin: 0;
-  padding: 0;
-  text-align: left;
-  background-color: #f8fafc; /* 柔和浅灰底色，减少纯白刺眼感 */
-  color: #334155;
-  font-size: 16px;
-  line-height: 1.75; /* 增加行距，提升中文长文本阅读舒适度 */
-  -webkit-font-smoothing: antialiased;
-}
-
-/* 统一规范所有标题的呼吸感与字重 */
-h1, h2, h3, h4, h5, h6 {
-  color: #0f172a;
   font-weight: 700;
   line-height: 1.35;
-  margin-top: 2rem;
-  margin-bottom: 0.8rem;
 }
 
-/* 规范段落与列表间距 */
 p {
   margin-bottom: 1.25rem;
 }
@@ -68,29 +50,26 @@ ul, ol {
   margin-bottom: 1.25rem;
 }
 
-li {
-  margin-bottom: 0.4rem;
-}
-
-/* 行内代码样式优化 */
 :not(pre) > code {
-  background-color: #e2e8f0;
-  color: #0f172a;
+  background-color: var(--code-bg);
+  color: var(--code-text);
   padding: 0.2em 0.45em;
   border-radius: 4px;
   font-size: 0.88em;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* 引用块样式强化 */
-blockquote {
-  margin: 1.5rem 0;
-  padding: 0.8rem 1.2rem;
-  border-left: 4px solid #3b82f6;
-  background-color: #eff6ff;
-  border-radius: 0 8px 8px 0;
-  color: #1e40af;
-}
-blockquote p {
+/* 隐藏屏幕阅读辅助文本，防止文字撑出页面 */
+.sr-only {
+  border: 0;
+  padding: 0;
   margin: 0;
+  position: absolute !important;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  clip: rect(1px 1px 1px 1px);
+  clip: rect(1px, 1px, 1px, 1px);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
