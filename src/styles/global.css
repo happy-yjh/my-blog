@@ -1,3 +1,41 @@
+:root {
+  --bg-color: #f8fafc;
+  --text-color: #334155;
+  --heading-color: #0f172a;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --header-bg: rgba(255, 255, 255, 0.85);
+  --code-bg: #e2e8f0;
+  --code-text: #0f172a;
+}
+
+html.dark {
+  --bg-color: #0f172a;
+  --text-color: #94a3b8;
+  --heading-color: #f8fafc;
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --header-bg: rgba(15, 23, 42, 0.85);
+  --code-bg: #334155;
+  --code-text: #f1f5f9;
+}
+
+/* 让 body 和标题直接绑定主题变量，平滑过渡 */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading-color);
+}
+
+:not(pre) > code {
+  background-color: var(--code-bg);
+  color: var(--code-text);
+}
+
 /* 引入现代系统字体族与优化阅读行高 */
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
