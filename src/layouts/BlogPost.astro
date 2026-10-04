@@ -15,44 +15,45 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 	<head>
 		<BaseHead title={title} description={description} />
 		<style>
-			main {
-				width: calc(100% - 2em);
-				max-width: 100%;
-				margin: 0;
-			}
-			.hero-image {
+  			main {
+   			 width: calc(100% - 2em);
+    		max-width: 820px; /* 最佳阅读视宽控制在 800px 左右 */
+   			 margin: 2rem auto 4rem;
+  			}
+  			.prose {
 				width: 100%;
-			}
-			.hero-image img {
-				display: block;
-				margin: 0 auto;
+				background: #ffffff; /* 正文卡片白底 */
+				padding: 2.5rem 2rem;
 				border-radius: 12px;
-				box-shadow: var(--box-shadow);
-			}
-			.prose {
-				width: 720px;
-				max-width: calc(100% - 2em);
-				margin: auto;
-				padding: 1em;
-				color: rgb(var(--gray-dark));
+				border: 1px solid #e2e8f0;
+				box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); /* 轻微悬浮质感 */
+				box-sizing: border-box;
 			}
 			.title {
-				margin-bottom: 1em;
-				padding: 1em 0;
+				margin-bottom: 2rem;
+				padding-bottom: 1.5rem;
+				border-bottom: 1px solid #f1f5f9;
 				text-align: center;
-				line-height: 1;
 			}
 			.title h1 {
-				margin: 0 0 0.5em 0;
+				font-size: 2.2rem;
+				margin: 0 0 0.5rem 0;
 			}
 			.date {
-				margin-bottom: 0.5em;
-				color: rgb(var(--gray));
+				color: #64748b;
+				font-size: 0.95rem;
 			}
-			.last-updated-on {
-				font-style: italic;
+			/* 代码块圆角与阴影 */
+			pre {
+				padding: 1.2rem 1.4rem;
+				border-radius: 8px;
+				border: 1px solid #334155;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+				margin: 1.8rem 0;
+				font-size: 0.92rem;
+				line-height: 1.6;
 			}
-		</style>
+			</style>
 	</head>
 
 	<body>
