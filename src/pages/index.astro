@@ -1,47 +1,131 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<style>
+			.hero-section {
+				padding: 2rem 0;
+				border-bottom: 1px solid #f1f5f9;
+				margin-bottom: 2rem;
+			}
+			.hero-title {
+				font-size: 2.2rem;
+				font-weight: 800;
+				color: #0f172a;
+				margin-bottom: 0.8rem;
+				line-height: 1.2;
+			}
+			.hero-subtitle {
+				font-size: 1.15rem;
+				color: #475569;
+				line-height: 1.6;
+			}
+			.badges {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px;
+				margin-top: 1.2rem;
+			}
+			.badge {
+				background: #f1f5f9;
+				color: #334155;
+				padding: 4px 10px;
+				border-radius: 9999px;
+				font-size: 0.85rem;
+				font-weight: 500;
+			}
+			.quick-nav-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+				gap: 16px;
+				margin: 1.5rem 0 2.5rem;
+			}
+			.nav-card {
+				display: block;
+				padding: 16px 20px;
+				border: 1px solid #e2e8f0;
+				border-radius: 10px;
+				text-decoration: none;
+				color: inherit;
+				background: #ffffff;
+				transition: all 0.2s ease;
+			}
+			.nav-card:hover {
+				transform: translateY(-3px);
+				box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+				border-color: #2563eb;
+			}
+			.nav-card h3 {
+				margin: 0 0 6px 0;
+				font-size: 1.1rem;
+				color: #2563eb;
+			}
+			.nav-card p {
+				margin: 0;
+				font-size: 0.88rem;
+				color: #64748b;
+				line-height: 1.4;
+			}
+			.section-heading {
+				font-size: 1.35rem;
+				font-weight: 700;
+				color: #1e293b;
+				margin-top: 1rem;
+			}
+			.bio-text {
+				color: #334155;
+				line-height: 1.7;
+			}
+		</style>
 	</head>
 	<body>
 		<Header />
-		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This template
-				serves as a lightweight, minimally-styled starting point for anyone looking to build a personal
-				website, blog, or portfolio with Astro.
+		<main style="max-width: 780px; margin: 0 auto; padding: 1.5rem 1rem;">
+			<!-- 头部欢迎区域 -->
+			<section class="hero-section">
+				<h1 class="hero-title">👋 你好，我是 happy-yjh！</h1>
+				<p class="hero-subtitle">
+					欢迎来到我的个人数字花园。这里主要记录平时的技术沉淀、前端与后端开发笔记，同时分享精选的技术工具与资源导航。
+				</p>
+				<div class="badges">
+					<span class="badge">💻 技术探索</span>
+					<span class="badge">🚀 效率工具</span>
+					<span class="badge">📚 持续学习</span>
+					<span class="badge">⚡ Astro & Cloudflare</span>
+				</div>
+			</section>
+
+			<!-- 模块快捷入口 -->
+			<h2 class="section-heading">快速探索</h2>
+			<div class="quick-nav-grid">
+				<a href="/blog" class="nav-card">
+					<h3>📝 技术博客</h3>
+					<p>阅读学习笔记、踩坑心得与技术总结。</p>
+				</a>
+				<a href="/nav" class="nav-card">
+					<h3>🧭 网站推荐</h3>
+					<p>精选的开发文档、实用工具与设计资源。</p>
+				</a>
+				<a href="/tools" class="nav-card">
+					<h3>🛠️ 在线小工具</h3>
+					<p>自己编写的高效轻量网页小工具。</p>
+				</a>
+			</div>
+
+			<!-- 关于与联系 -->
+			<h2 class="section-heading">关于本站</h2>
+			<p class="bio-text">
+				本站基于 <strong>Astro</strong> 纯静态框架构建，代码托管于 <strong>GitHub</strong>，并通过 <strong>Cloudflare Pages</strong> 实现全球 CDN 零成本极速分发。
 			</p>
-			<p>
-				This template comes with a few integrations already configured in your{' '}
-				<code>astro.config.mjs</code> file. You can customize your setup with{' '}
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to{' '}
-				<a href="https://docs.astro.build/">read the docs</a>{' '}
-				or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out{' '}
-				<a href="https://github.com/Charca/astro-blog-template">astro-blog-template</a>{' '}
-				by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
+			<p class="bio-text">
+				如果你也对网站搭建、前端技术或工具开发感兴趣，欢迎通过顶部的社交链接与我交流！
 			</p>
 		</main>
 		<Footer />
