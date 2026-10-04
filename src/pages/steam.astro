@@ -4,18 +4,17 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 
-// 这里填入你的 SteamID64（17位数字，比如 76561198xxxxxxxxx）
-const STEAM_ID = '76561198000000000'; 
+const STEAM_ID = '76561198377154399';
 ---
 
 <!doctype html>
 <html lang="zh-CN">
 	<head>
-		<BaseHead title={`Steam 状态与游戏展柜 - ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+		<BaseHead title={`Steam 游戏人生 - ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
 		<style>
 			main {
 				max-width: 820px;
-				margin: 2rem auto;
+				margin: 2rem auto 4rem;
 				padding: 0 1rem;
 			}
 			.page-header {
@@ -43,6 +42,7 @@ const STEAM_ID = '76561198000000000';
 				border: 1px solid var(--card-border);
 				border-radius: 12px;
 				padding: 1.5rem;
+				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
 			}
 			.card-box h2 {
 				margin-top: 0;
@@ -50,33 +50,60 @@ const STEAM_ID = '76561198000000000';
 				font-size: 1.3rem;
 				color: var(--heading-color);
 			}
-			.card-box p {
-				color: var(--text-color);
-				margin-bottom: 1rem;
-			}
 			.steam-badge-container {
 				display: flex;
 				justify-content: center;
-				padding: 1rem 0;
+				padding: 0.5rem 0 1.5rem;
 			}
 			.steam-badge-container img {
 				max-width: 100%;
 				height: auto;
-				border-radius: 8px;
+				border-radius: 10px;
+				box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 			}
-			.profile-btn {
-				display: inline-block;
-				padding: 8px 16px;
-				background: var(--accent);
-				color: #fff;
-				text-decoration: none;
-				border-radius: 6px;
-				font-weight: 500;
+			.action-buttons {
+				display: flex;
+				justify-content: center;
+				gap: 12px;
+				flex-wrap: wrap;
 				margin-top: 0.5rem;
-				transition: opacity 0.2s;
 			}
-			.profile-btn:hover {
+			.btn {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				padding: 8px 16px;
+				background: var(--card-bg);
+				border: 1px solid var(--card-border);
+				color: var(--text-color);
+				text-decoration: none;
+				border-radius: 8px;
+				font-weight: 500;
+				font-size: 0.95rem;
+				transition: all 0.2s ease;
+			}
+			.btn:hover {
+				border-color: var(--accent);
+				color: var(--accent);
+				transform: translateY(-2px);
+			}
+			.btn.primary {
+				background: var(--accent);
+				color: #ffffff;
+				border-color: var(--accent);
+			}
+			.btn.primary:hover {
 				opacity: 0.9;
+				color: #ffffff;
+			}
+			.note-box {
+				margin-top: 1rem;
+				padding: 12px 16px;
+				background: var(--code-bg);
+				border-radius: 8px;
+				font-size: 0.9rem;
+				color: var(--text-color);
+				line-height: 1.6;
 			}
 		</style>
 	</head>
@@ -85,30 +112,49 @@ const STEAM_ID = '76561198000000000';
 		<main>
 			<section class="page-header">
 				<h1>🎮 Steam 游戏人生</h1>
-				<p>记录游戏时光、实时在线状态与库存展示</p>
+				<p>实时在线状态、游戏记录与个人资料展柜</p>
 			</section>
 
 			<div class="steam-section">
 				<!-- 在线状态卡片 -->
 				<section class="card-box">
-					<h2>🕹️ 当前实时状态</h2>
+					<h2>🕹️ 实时游戏与在线状态</h2>
 					<div class="steam-badge-container">
-						<!-- 利用社区动态 SVG 卡片实时展示状态（需替换你的 SteamID） -->
+						<!-- 基于 SteamID 动态生成的即时状态卡片 -->
 						<img 
 							src={`https://steam-chroma.vercel.app/api?steamid=${STEAM_ID}`} 
 							alt="Steam 状态卡片" 
 							loading="lazy"
 						/>
 					</div>
-					<div style="text-align: center;">
+
+					<div class="action-buttons">
 						<a 
 							href={`https://steamcommunity.com/profiles/${STEAM_ID}`} 
 							target="_blank" 
 							rel="noopener noreferrer"
-							class="profile-btn"
+							class="btn primary"
 						>
-							访问我的 Steam 个人主页
+							🌐 访问 Steam 主页
 						</a>
+						<a 
+							href={`https://steamcommunity.com/profiles/${STEAM_ID}/inventory/`} 
+							target="_blank" 
+							rel="noopener noreferrer"
+							class="btn"
+						>
+							📦 查看 Steam 游戏库存
+						</a>
+						<a 
+							href={`steam://friends/add/${STEAM_ID}`} 
+							class="btn"
+						>
+							➕ 唤醒 Steam 添加好友
+						</a>
+					</div>
+
+					<div class="note-box">
+						💡 <strong>提示</strong>：如果状态卡片显示为离线或加载不出游戏详情，请前往 Steam 客户端：<strong>编辑个人资料 → 隐私设置</strong>，确认「我的个人资料」和「游戏详细信息」已勾选为<strong>公开</strong>。
 					</div>
 				</section>
 			</div>
