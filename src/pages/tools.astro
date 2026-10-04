@@ -1,0 +1,65 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <BaseHead title="在线小工具" description="字数统计与文本分析" />
+    <style>
+      .tool-box {
+        margin-top: 1.5rem;
+        padding: 20px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+      }
+      textarea {
+        width: 100%;
+        height: 150px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 1rem;
+      }
+      .stats {
+        display: flex;
+        gap: 20px;
+        margin-top: 1rem;
+        font-size: 1.1rem;
+      }
+      .stat-num {
+        font-weight: bold;
+        color: #2563eb;
+      }
+    </style>
+  </head>
+  <body>
+    <Header />
+    <main style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
+      <h1>在线文本统计工具</h1>
+      <div class="tool-box">
+        <textarea id="myInput" placeholder="在此处粘贴或输入文本内容..."></textarea>
+        <div class="stats">
+          <div>总字符数：<span id="charCount" class="stat-num">0</span></div>
+          <div>排除空格字符：<span id="noSpaceCount" class="stat-num">0</span></div>
+        </div>
+      </div>
+    </main>
+    <Footer />
+
+    <script>
+      const textarea = document.getElementById('myInput') as HTMLTextAreaElement;
+      const charCount = document.getElementById('charCount') as HTMLElement;
+      const noSpaceCount = document.getElementById('noSpaceCount') as HTMLElement;
+
+      textarea?.addEventListener('input', () => {
+        const val = textarea.value;
+        charCount.textContent = val.length.toString();
+        noSpaceCount.textContent = val.replace(/\s+/g, '').length.toString();
+      });
+    </script>
+  </body>
+</html>

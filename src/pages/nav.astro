@@ -1,0 +1,69 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+// 以后想推荐新网站，直接复制一行加在下面即可
+const websites = [
+  { name: 'MDN Web 文档', url: 'https://developer.mozilla.org/', desc: '权威的前端开发知识库与参考手册' },
+  { name: 'GitHub', url: 'https://github.com/', desc: '全球开源代码托管与协作平台' },
+  { name: 'Squoosh', url: 'https://squoosh.app/', desc: 'Google 出品的在线超强图片无损压缩工具' },
+  { name: 'Can I use', url: 'https://caniuse.com/', desc: '快速查询浏览器对前端特性的兼容性支持情况' }
+];
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <BaseHead title="实用网站推荐" description="精选技术资源" />
+    <style>
+      .site-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        margin-top: 1.5rem;
+      }
+      .site-card {
+        display: block;
+        padding: 16px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        text-decoration: none;
+        color: inherit;
+        background: #fff;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .site-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-color: #2563eb;
+      }
+      .site-card h3 {
+        margin: 0 0 8px 0;
+        color: #2563eb;
+        font-size: 1.1rem;
+      }
+      .site-card p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #64748b;
+      }
+    </style>
+  </head>
+  <body>
+    <Header />
+    <main style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
+      <h1>实用技术网站推荐</h1>
+      <p>精选的开发效率工具与参考资料：</p>
+      <div class="site-grid">
+        {websites.map(site => (
+          <a href={site.url} target="_blank" rel="noopener noreferrer" class="site-card">
+            <h3>{site.name}</h3>
+            <p>{site.desc}</p>
+          </a>
+        ))}
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>
