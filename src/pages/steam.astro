@@ -5,158 +5,340 @@ import Footer from '../components/Footer.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 
 const STEAM_ID = '76561198377154399';
+const STEAM_NAME = '浪浪山小鱼';
+
+// 最近玩过的 Steam 游戏（精选官方 CDN 胶囊图，不依赖 API，极速秒开）
+const recentSteamGames = [
+	{
+		appid: '570',
+		name: 'Dota 2',
+		hours: '2,588h',
+		icon: 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/570/capsule_231x87.jpg'
+	},
+	{
+		appid: '730',
+		name: 'Counter-Strike 2',
+		hours: '21h',
+		icon: 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/730/capsule_231x87.jpg'
+	},
+	{
+		appid: '2358720',
+		name: '黑神话：悟空',
+		hours: '59h',
+		icon: 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2358720/capsule_231x87.jpg'
+	}
+];
+
+// 下方：我喜欢玩的游戏（参考截图布局，随时可按需修改或添加）
+const favoriteGames = [
+	{
+		name: 'Dota 2',
+		id: '76561198377154399',
+		server: '完美世界电竞',
+		icon: '🛡️'
+	},
+	{
+		name: '永劫无间',
+		id: '浪浪山小鱼',
+		server: '国服',
+		icon: '🗡️'
+	}
+];
 ---
 
 <!doctype html>
 <html lang="zh-CN">
 	<head>
-		<BaseHead title={`Steam 游戏人生 - ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+		<BaseHead title={`游戏人生 - ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
 		<style>
+			body {
+				background-color: #0b0f17;
+				color: #e2e8f0;
+			}
 			main {
-				max-width: 820px;
+				max-width: 860px;
 				margin: 2rem auto 4rem;
-				padding: 0 1rem;
+				padding: 0 1.25rem;
 			}
-			.page-header {
-				margin-bottom: 2rem;
-				border-bottom: 1px solid var(--card-border);
-				padding-bottom: 1.5rem;
+
+			/* 拟态半透明磨砂毛玻璃卡片 */
+			.glass-card {
+				background: rgba(22, 27, 34, 0.7);
+				backdrop-filter: blur(16px);
+				-webkit-backdrop-filter: blur(16px);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 16px;
+				padding: 1.75rem;
+				box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+				margin-bottom: 2.5rem;
 			}
-			.page-header h1 {
-				margin: 0 0 0.5rem 0;
-				font-size: 2rem;
-				color: var(--heading-color);
-			}
-			.page-header p {
-				margin: 0;
-				color: var(--text-color);
-				font-size: 1rem;
-			}
-			.steam-section {
+
+			/* Steam 顶部资料栏 */
+			.steam-header {
 				display: flex;
-				flex-direction: column;
-				gap: 1.5rem;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 1.8rem;
 			}
-			.card-box {
-				background: var(--card-bg);
-				border: 1px solid var(--card-border);
+			.user-info {
+				display: flex;
+				align-items: center;
+				gap: 1rem;
+			}
+			.avatar-box {
+				width: 58px;
+				height: 58px;
 				border-radius: 12px;
-				padding: 1.5rem;
-				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
-			}
-			.card-box h2 {
-				margin-top: 0;
-				margin-bottom: 1rem;
-				font-size: 1.3rem;
-				color: var(--heading-color);
-			}
-			.steam-badge-container {
+				overflow: hidden;
+				border: 2px solid rgba(255, 255, 255, 0.15);
+				background: #171a21;
 				display: flex;
+				align-items: center;
 				justify-content: center;
-				padding: 0.5rem 0 1.5rem;
+				font-size: 1.8rem;
 			}
-			.steam-badge-container img {
-				max-width: 100%;
-				height: auto;
-				border-radius: 10px;
-				box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+			.user-meta .tag {
+				font-size: 0.72rem;
+				letter-spacing: 1px;
+				color: #64748b;
+				margin-bottom: 2px;
+				font-weight: 600;
 			}
-			.action-buttons {
-				display: flex;
-				justify-content: center;
-				gap: 12px;
-				flex-wrap: wrap;
-				margin-top: 0.5rem;
+			.user-meta .name {
+				font-size: 1.35rem;
+				font-weight: 700;
+				color: #ffffff;
+				margin: 0;
 			}
-			.btn {
+
+			/* 状态小药丸标签 */
+			.status-pill {
 				display: inline-flex;
 				align-items: center;
-				gap: 6px;
-				padding: 8px 16px;
-				background: var(--card-bg);
-				border: 1px solid var(--card-border);
-				color: var(--text-color);
-				text-decoration: none;
-				border-radius: 8px;
+				gap: 8px;
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				padding: 6px 14px;
+				border-radius: 20px;
+				font-size: 0.85rem;
+				color: #94a3b8;
+			}
+			.status-dot {
+				width: 8px;
+				height: 8px;
+				background: #10b981;
+				border-radius: 50%;
+				box-shadow: 0 0 8px #10b981;
+			}
+
+			/* 最近玩过板块 */
+			.recent-title {
+				font-size: 0.85rem;
+				color: #64748b;
+				margin-bottom: 0.8rem;
 				font-weight: 500;
-				font-size: 0.95rem;
+			}
+			.games-row {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+				gap: 12px;
+			}
+			.game-pill {
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-radius: 10px;
+				padding: 8px 12px;
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				text-decoration: none;
+				color: inherit;
 				transition: all 0.2s ease;
 			}
-			.btn:hover {
-				border-color: var(--accent);
-				color: var(--accent);
+			.game-pill:hover {
+				background: rgba(255, 255, 255, 0.09);
+				border-color: rgba(255, 255, 255, 0.15);
 				transform: translateY(-2px);
 			}
-			.btn.primary {
-				background: var(--accent);
-				color: #ffffff;
-				border-color: var(--accent);
+			.game-thumb {
+				width: 52px;
+				height: 28px;
+				border-radius: 4px;
+				object-fit: cover;
+				background: #171a21;
 			}
-			.btn.primary:hover {
-				opacity: 0.9;
-				color: #ffffff;
+			.game-pill-info {
+				flex: 1;
+				min-width: 0;
 			}
-			.note-box {
-				margin-top: 1rem;
-				padding: 12px 16px;
-				background: var(--code-bg);
-				border-radius: 8px;
+			.game-pill-name {
+				font-size: 0.88rem;
+				font-weight: 600;
+				color: #f1f5f9;
+				margin: 0;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.game-pill-time {
+				font-size: 0.75rem;
+				color: #64748b;
+				margin: 2px 0 0 0;
+			}
+
+			/* 下半部分：我喜欢玩的游戏 */
+			.section-header h2 {
+				font-size: 1.5rem;
+				font-weight: 800;
+				color: #ffffff;
+				margin: 0 0 4px 0;
+			}
+			.section-header p {
+				color: #64748b;
 				font-size: 0.9rem;
-				color: var(--text-color);
-				line-height: 1.6;
+				margin: 0 0 1.25rem 0;
+			}
+			.fav-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+				gap: 12px;
+			}
+			.fav-card {
+				background: rgba(22, 27, 34, 0.55);
+				backdrop-filter: blur(12px);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-radius: 12px;
+				padding: 14px 16px;
+				display: flex;
+				align-items: center;
+				gap: 14px;
+				transition: all 0.2s ease;
+			}
+			.fav-card:hover {
+				border-color: rgba(255, 255, 255, 0.18);
+				background: rgba(255, 255, 255, 0.05);
+				transform: translateY(-2px);
+			}
+			.fav-icon {
+				font-size: 1.8rem;
+				width: 44px;
+				height: 44px;
+				background: rgba(255, 255, 255, 0.05);
+				border-radius: 8px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.fav-info h3 {
+				font-size: 0.95rem;
+				font-weight: 700;
+				color: #ffffff;
+				margin: 0 0 3px 0;
+			}
+			.fav-info p {
+				font-size: 0.78rem;
+				color: #94a3b8;
+				margin: 0;
+			}
+			.fav-meta {
+				display: flex;
+				gap: 8px;
+				margin-top: 4px;
+				font-size: 0.75rem;
+				color: #64748b;
+			}
+
+			/* 底部快捷链接按钮 */
+			.steam-actions {
+				margin-top: 1.5rem;
+				display: flex;
+				justify-content: flex-end;
+				gap: 10px;
+			}
+			.steam-link-btn {
+				font-size: 0.85rem;
+				color: #94a3b8;
+				text-decoration: none;
+				padding: 6px 14px;
+				border-radius: 6px;
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				transition: all 0.2s;
+			}
+			.steam-link-btn:hover {
+				color: #ffffff;
+				background: rgba(255, 255, 255, 0.1);
 			}
 		</style>
 	</head>
 	<body>
 		<Header />
 		<main>
-			<section class="page-header">
-				<h1>🎮 Steam 游戏人生</h1>
-				<p>实时在线状态、游戏记录与个人资料展柜</p>
-			</section>
-
-			<div class="steam-section">
-				<!-- 在线状态卡片 -->
-				<section class="card-box">
-					<h2>🕹️ 实时游戏与在线状态</h2>
-					<div class="steam-badge-container">
-						<!-- 基于 SteamID 动态生成的即时状态卡片 -->
-						<img 
-							src={`https://steam-chroma.vercel.app/api?steamid=${STEAM_ID}`} 
-							alt="Steam 状态卡片" 
-							loading="lazy"
-						/>
+			<!-- 顶部拟态毛玻璃卡片：Steam 状态 -->
+			<div class="glass-card">
+				<div class="steam-header">
+					<div class="user-info">
+						<div class="avatar-box">
+							<span>🐟</span>
+						</div>
+						<div class="user-meta">
+							<div class="tag">STEAM 状态</div>
+							<h1 class="name">{STEAM_NAME}</h1>
+						</div>
 					</div>
+					<div class="status-pill">
+						<span class="status-dot"></span>
+						<span>在线 / 游戏中</span>
+					</div>
+				</div>
 
-					<div class="action-buttons">
+				<div class="recent-title">最近玩过</div>
+				<div class="games-row">
+					{recentSteamGames.map((game) => (
 						<a 
-							href={`https://steamcommunity.com/profiles/${STEAM_ID}`} 
+							href={`https://store.steampowered.com/app/${game.appid}/`} 
 							target="_blank" 
-							rel="noopener noreferrer"
-							class="btn primary"
+							rel="noopener noreferrer" 
+							class="game-pill"
 						>
-							🌐 访问 Steam 主页
+							<img src={game.icon} alt={game.name} class="game-thumb" loading="lazy" />
+							<div class="game-pill-info">
+								<h4 class="game-pill-name">{game.name}</h4>
+								<p class="game-pill-time">总游玩 {game.hours}</p>
+							</div>
 						</a>
-						<a 
-							href={`https://steamcommunity.com/profiles/${STEAM_ID}/inventory/`} 
-							target="_blank" 
-							rel="noopener noreferrer"
-							class="btn"
-						>
-							📦 查看 Steam 游戏库存
-						</a>
-						<a 
-							href={`steam://friends/add/${STEAM_ID}`} 
-							class="btn"
-						>
-							➕ 唤醒 Steam 添加好友
-						</a>
-					</div>
+					))}
+				</div>
 
-					<div class="note-box">
-						💡 <strong>提示</strong>：如果状态卡片显示为离线或加载不出游戏详情，请前往 Steam 客户端：<strong>编辑个人资料 → 隐私设置</strong>，确认「我的个人资料」和「游戏详细信息」已勾选为<strong>公开</strong>。
+				<div class="steam-actions">
+					<a href={`https://steamcommunity.com/profiles/${STEAM_ID}`} target="_blank" rel="noopener noreferrer" class="steam-link-btn">
+						↗ 访问个人主页
+					</a>
+					<a href={`https://steamcommunity.com/profiles/${STEAM_ID}/inventory/`} target="_blank" rel="noopener noreferrer" class="steam-link-btn">
+						📦 查看个人库存
+					</a>
+				</div>
+			</div>
+
+			<!-- 下半部分：我喜欢玩的游戏 -->
+			<div class="section-header">
+				<h2>我喜欢玩的游戏</h2>
+				<p>欢迎来找我玩 / 组队开黑</p>
+			</div>
+
+			<div class="fav-grid">
+				{favoriteGames.map((game) => (
+					<div class="fav-card">
+						<div class="fav-icon">{game.icon}</div>
+						<div class="fav-info">
+							<h3>{game.name}</h3>
+							<p>ID: {game.id}</p>
+							<div class="fav-meta">
+								<span>🏷️ {game.server}</span>
+							</div>
+						</div>
 					</div>
-				</section>
+				))}
 			</div>
 		</main>
 		<Footer />
