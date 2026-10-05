@@ -4,22 +4,21 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE } from '../consts';
 
-// 填入你的豆瓣用户数字 ID 或个性域名（如 123456789）
-const DOUBAN_USER_ID = '204088971'; 
+// 你的豆瓣个人 ID
+const DOUBAN_USER_ID = '2583694742'; 
 
 interface DoubanItem {
 	title: string;
 	link: string;
 	pubDate: string;
-	description: string;
+	rating: string;
+	comment: string;
 	imgSrc: string;
-	type: string;
 }
 
 let items: DoubanItem[] = [];
 
 try {
-	// 从豆瓣官方公开 RSS 抓取动态
 	const rssUrl = `https://www.douban.com/feed/people/${DOUBAN_USER_ID}/interests`;
 	const res = await fetch(rssUrl, {
 		headers: {
@@ -29,41 +28,56 @@ try {
 
 	if (res.ok) {
 		const xmlText = await res.text();
-		// 正则匹配提取 RSS 节点
 		const itemRegex = /<item>([\s\S]*?)<\/item>/g;
 		let match;
+
 		while ((match = itemRegex.exec(xmlText)) !== null) {
 			const itemContent = match[1];
-			const titleMatch = itemContent.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || itemContent.match(/<title>(.*?)<\/title>/);
-			const linkMatch = itemContent.match(/<link>(.*?)<\/link>/);
+			
+			// 提取标题并彻底剥离 CDATA 和多余符号
+			const titleMatch = itemContent.match(/<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/);
+			const linkMatch = itemContent.match(/<link>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/link>/);
 			const dateMatch = itemContent.match(/<pubDate>(.*?)<\/pubDate>/);
 			const descMatch = itemContent.match(/<description>([\s\S]*?)<\/description>/);
 
-			const title = titleMatch ? titleMatch[1].trim() : '';
-			const link = linkMatch ? linkMatch[1].trim() : '';
+			let title = titleMatch ? titleMatch[1].replace(/\]\]>/g, '').trim() : '';
+			const link = linkMatch ? linkMatch[1].replace(/\]\]>/g, '').trim() : '';
 			const pubDate = dateMatch ? new Date(dateMatch[1]).toLocaleDateString('zh-CN') : '';
 			const rawDesc = descMatch ? descMatch[1] : '';
 
-			// 提取海报图片地址
+			// 提取海报并经由全局 CDN 缓存代理（彻底规避防盗链）
 			const imgMatch = rawDesc.match(/<img[^>]+src=["']([^"']+)["']/i);
-			let imgSrc = imgMatch ? imgMatch[1] : '';
-			
-			// 转换为高清大图
-			if (imgSrc.includes('s_ratio_poster') || imgSrc.includes('sposter')) {
-				imgSrc = imgSrc.replace(/s_ratio_poster|sposter/, 'l_ratio_poster');
+			let imgSrc = '';
+			if (imgMatch) {
+				let originalImg = imgMatch[1];
+				// 替换为高清大图尺寸
+				originalImg = originalImg.replace(/s_ratio_poster|sposter/, 'l_ratio_poster');
+				// 使用图片代理服务中转豆瓣防盗链图片
+				imgSrc = `https://images.weserv.nl/?url=${encodeURIComponent(originalImg)}&default=1`;
 			}
 
-			// 纯文本简介
-			const cleanDesc = rawDesc.replace(/<[^>]+>/g, '').trim();
+			// 提取推荐星级与评价
+			let rating = '';
+			const ratingMatch = rawDesc.match(/推荐:\s*([^\s<\]]+)/);
+			if (ratingMatch) {
+				rating = ratingMatch[1];
+			}
+
+			// 提取并清洗短评描述
+			let comment = rawDesc
+				.replace(/<[^>]+>/g, '') // 去除 HTML 标签
+				.replace(/\]\]>/g, '')   // 去除 CDATA 尾巴
+				.replace(/推荐:\s*[^\s]+/g, '') // 移除单独的推荐字样
+				.trim();
 
 			if (title) {
 				items.push({
 					title,
 					link,
 					pubDate,
-					description: cleanDesc,
-					imgSrc,
-					type: title.includes('读') ? 'book' : title.includes('听') ? 'music' : 'movie'
+					rating,
+					comment,
+					imgSrc
 				});
 			}
 		}
@@ -71,40 +85,17 @@ try {
 } catch (e) {
 	console.error('抓取豆瓣数据失败:', e);
 }
-
-// 兜底数据（防止初次填错 ID 页面空白）
-if (items.length === 0) {
-	items = [
-		{
-			title: '想看《星际穿越》',
-			link: 'https://movie.douban.com/subject/1889243/',
-			pubDate: '2026/10/01',
-			description: '爱是穿越时空与维度的唯一力量。',
-			imgSrc: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2614988097.jpg',
-			type: 'movie'
-		},
-		{
-			title: '读过《三体全集》',
-			link: 'https://book.douban.com/subject/6518605/',
-			pubDate: '2026/09/20',
-			description: '给岁月以文明，而不是给文明以岁月。',
-			imgSrc: 'https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2358054049.jpg',
-			type: 'book'
-		}
-	];
-}
 ---
 
 <!doctype html>
 <html lang="zh-CN">
 	<head>
-		<BaseHead title={`我的豆瓣书影音 - ${SITE_TITLE}`} description="记录我的电影、图书与音乐足迹" />
-		<!-- 核心修复：彻底解决豆瓣/外部图床图片裂开防盗链问题 -->
+		<BaseHead title={`豆瓣书影音 - ${SITE_TITLE}`} description="记录我的电影、图书与生活足迹" />
 		<meta name="referrer" content="no-referrer" />
 		<style>
 			main {
 				max-width: 960px;
-				margin: 2rem auto 4rem;
+				margin: 1.5rem auto 4rem;
 				padding: 0 1rem;
 				box-sizing: border-box;
 			}
@@ -136,10 +127,10 @@ if (items.length === 0) {
 				color: #38bdf8;
 			}
 
-			/* 豆瓣海报卡片网格 */
+			/* 豆瓣卡片网格 */
 			.douban-grid {
 				display: grid;
-				grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+				grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
 				gap: 16px;
 			}
 			.douban-card {
@@ -151,11 +142,12 @@ if (items.length === 0) {
 				text-decoration: none;
 				color: inherit;
 				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-				transition: transform 0.2s ease, border-color 0.2s ease;
+				transition: all 0.2s ease;
 			}
 			.douban-card:hover {
 				transform: translateY(-3px);
 				border-color: #0284c7;
+				box-shadow: 0 6px 16px rgba(2, 132, 199, 0.12);
 			}
 			:global(html.dark) .douban-card {
 				background: rgba(22, 27, 34, 0.65);
@@ -168,11 +160,12 @@ if (items.length === 0) {
 			}
 
 			.cover-wrap {
-				width: 100px;
-				min-height: 140px;
+				width: 105px;
+				height: 145px;
 				flex-shrink: 0;
 				background: #1e293b;
 				position: relative;
+				overflow: hidden;
 			}
 			.douban-cover {
 				width: 100%;
@@ -180,6 +173,7 @@ if (items.length === 0) {
 				object-fit: cover;
 				display: block;
 			}
+
 			.info-wrap {
 				padding: 12px;
 				display: flex;
@@ -192,25 +186,39 @@ if (items.length === 0) {
 				font-size: 0.95rem;
 				font-weight: 700;
 				color: #0f172a;
-				margin: 0 0 6px 0;
+				margin: 0 0 4px 0;
 				line-height: 1.4;
 			}
 			:global(html.dark) .item-title {
 				color: #f1f5f9;
 			}
-			.item-desc {
+
+			.rating-pill {
+				display: inline-block;
+				font-size: 0.72rem;
+				font-weight: 600;
+				color: #eab308;
+				background: rgba(234, 179, 8, 0.1);
+				padding: 1px 6px;
+				border-radius: 4px;
+				margin-bottom: 6px;
+				width: fit-content;
+			}
+
+			.item-comment {
 				font-size: 0.78rem;
 				color: #64748b;
 				margin: 0;
 				display: -webkit-box;
-				-webkit-line-clamp: 3;
+				-webkit-line-clamp: 2;
 				-webkit-box-orient: vertical;
 				overflow: hidden;
 				line-height: 1.5;
 			}
-			:global(html.dark) .item-desc {
+			:global(html.dark) .item-comment {
 				color: #94a3b8;
 			}
+
 			.item-date {
 				font-size: 0.72rem;
 				color: #94a3b8;
@@ -236,13 +244,14 @@ if (items.length === 0) {
 							{item.imgSrc ? (
 								<img src={item.imgSrc} alt={item.title} class="douban-cover" loading="lazy" />
 							) : (
-								<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:0.75rem;">暂无封面</div>
+								<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:0.75rem;">无封面</div>
 							)}
 						</div>
 						<div class="info-wrap">
 							<div>
 								<h3 class="item-title">{item.title}</h3>
-								<p class="item-desc">{item.description}</p>
+								{item.rating && <div class="rating-pill">推荐: {item.rating}</div>}
+								{item.comment && <p class="item-comment">{item.comment}</p>}
 							</div>
 							<div class="item-date">标记于 {item.pubDate}</div>
 						</div>
