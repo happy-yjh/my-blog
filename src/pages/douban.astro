@@ -1,0 +1,255 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+
+// 填入你的豆瓣用户数字 ID 或个性域名（如 123456789）
+const DOUBAN_USER_ID = '204088971'; 
+
+interface DoubanItem {
+	title: string;
+	link: string;
+	pubDate: string;
+	description: string;
+	imgSrc: string;
+	type: string;
+}
+
+let items: DoubanItem[] = [];
+
+try {
+	// 从豆瓣官方公开 RSS 抓取动态
+	const rssUrl = `https://www.douban.com/feed/people/${DOUBAN_USER_ID}/interests`;
+	const res = await fetch(rssUrl, {
+		headers: {
+			'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+		}
+	});
+
+	if (res.ok) {
+		const xmlText = await res.text();
+		// 正则匹配提取 RSS 节点
+		const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+		let match;
+		while ((match = itemRegex.exec(xmlText)) !== null) {
+			const itemContent = match[1];
+			const titleMatch = itemContent.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || itemContent.match(/<title>(.*?)<\/title>/);
+			const linkMatch = itemContent.match(/<link>(.*?)<\/link>/);
+			const dateMatch = itemContent.match(/<pubDate>(.*?)<\/pubDate>/);
+			const descMatch = itemContent.match(/<description>([\s\S]*?)<\/description>/);
+
+			const title = titleMatch ? titleMatch[1].trim() : '';
+			const link = linkMatch ? linkMatch[1].trim() : '';
+			const pubDate = dateMatch ? new Date(dateMatch[1]).toLocaleDateString('zh-CN') : '';
+			const rawDesc = descMatch ? descMatch[1] : '';
+
+			// 提取海报图片地址
+			const imgMatch = rawDesc.match(/<img[^>]+src=["']([^"']+)["']/i);
+			let imgSrc = imgMatch ? imgMatch[1] : '';
+			
+			// 转换为高清大图
+			if (imgSrc.includes('s_ratio_poster') || imgSrc.includes('sposter')) {
+				imgSrc = imgSrc.replace(/s_ratio_poster|sposter/, 'l_ratio_poster');
+			}
+
+			// 纯文本简介
+			const cleanDesc = rawDesc.replace(/<[^>]+>/g, '').trim();
+
+			if (title) {
+				items.push({
+					title,
+					link,
+					pubDate,
+					description: cleanDesc,
+					imgSrc,
+					type: title.includes('读') ? 'book' : title.includes('听') ? 'music' : 'movie'
+				});
+			}
+		}
+	}
+} catch (e) {
+	console.error('抓取豆瓣数据失败:', e);
+}
+
+// 兜底数据（防止初次填错 ID 页面空白）
+if (items.length === 0) {
+	items = [
+		{
+			title: '想看《星际穿越》',
+			link: 'https://movie.douban.com/subject/1889243/',
+			pubDate: '2026/10/01',
+			description: '爱是穿越时空与维度的唯一力量。',
+			imgSrc: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2614988097.jpg',
+			type: 'movie'
+		},
+		{
+			title: '读过《三体全集》',
+			link: 'https://book.douban.com/subject/6518605/',
+			pubDate: '2026/09/20',
+			description: '给岁月以文明，而不是给文明以岁月。',
+			imgSrc: 'https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2358054049.jpg',
+			type: 'book'
+		}
+	];
+}
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<BaseHead title={`我的豆瓣书影音 - ${SITE_TITLE}`} description="记录我的电影、图书与音乐足迹" />
+		<!-- 核心修复：彻底解决豆瓣/外部图床图片裂开防盗链问题 -->
+		<meta name="referrer" content="no-referrer" />
+		<style>
+			main {
+				max-width: 960px;
+				margin: 2rem auto 4rem;
+				padding: 0 1rem;
+				box-sizing: border-box;
+			}
+			.page-header {
+				margin-bottom: 2rem;
+			}
+			.page-title {
+				font-size: 1.75rem;
+				font-weight: 800;
+				margin: 0 0 0.4rem 0;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+			.page-desc {
+				color: #64748b;
+				margin: 0 0 8px 0;
+				font-size: 0.95rem;
+			}
+			.page-meta {
+				font-size: 0.8rem;
+				color: #94a3b8;
+			}
+			.page-meta a {
+				color: #0284c7;
+				text-decoration: none;
+			}
+			:global(html.dark) .page-meta a {
+				color: #38bdf8;
+			}
+
+			/* 豆瓣海报卡片网格 */
+			.douban-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+				gap: 16px;
+			}
+			.douban-card {
+				display: flex;
+				background: #ffffff;
+				border: 1px solid rgba(0, 0, 0, 0.08);
+				border-radius: 12px;
+				overflow: hidden;
+				text-decoration: none;
+				color: inherit;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+				transition: transform 0.2s ease, border-color 0.2s ease;
+			}
+			.douban-card:hover {
+				transform: translateY(-3px);
+				border-color: #0284c7;
+			}
+			:global(html.dark) .douban-card {
+				background: rgba(22, 27, 34, 0.65);
+				border-color: rgba(255, 255, 255, 0.08);
+				box-shadow: none;
+			}
+			:global(html.dark) .douban-card:hover {
+				border-color: rgba(56, 189, 248, 0.4);
+				background: rgba(22, 27, 34, 0.9);
+			}
+
+			.cover-wrap {
+				width: 100px;
+				min-height: 140px;
+				flex-shrink: 0;
+				background: #1e293b;
+				position: relative;
+			}
+			.douban-cover {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				display: block;
+			}
+			.info-wrap {
+				padding: 12px;
+				display: flex;
+				flex-direction: column;
+				justify-content: space-between;
+				flex: 1;
+				min-width: 0;
+			}
+			.item-title {
+				font-size: 0.95rem;
+				font-weight: 700;
+				color: #0f172a;
+				margin: 0 0 6px 0;
+				line-height: 1.4;
+			}
+			:global(html.dark) .item-title {
+				color: #f1f5f9;
+			}
+			.item-desc {
+				font-size: 0.78rem;
+				color: #64748b;
+				margin: 0;
+				display: -webkit-box;
+				-webkit-line-clamp: 3;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+				line-height: 1.5;
+			}
+			:global(html.dark) .item-desc {
+				color: #94a3b8;
+			}
+			.item-date {
+				font-size: 0.72rem;
+				color: #94a3b8;
+				margin-top: 8px;
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<div class="page-header">
+				<h1 class="page-title">🎬 豆瓣书影音</h1>
+				<p class="page-desc">电影、阅读与生活随记</p>
+				<div class="page-meta">
+					数据来源：<a href={`https://www.douban.com/people/${DOUBAN_USER_ID}/`} target="_blank" rel="noopener noreferrer">我的豆瓣个人主页 ↗</a>
+				</div>
+			</div>
+
+			<div class="douban-grid">
+				{items.map((item) => (
+					<a href={item.link} target="_blank" rel="noopener noreferrer" class="douban-card">
+						<div class="cover-wrap">
+							{item.imgSrc ? (
+								<img src={item.imgSrc} alt={item.title} class="douban-cover" loading="lazy" />
+							) : (
+								<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:0.75rem;">暂无封面</div>
+							)}
+						</div>
+						<div class="info-wrap">
+							<div>
+								<h3 class="item-title">{item.title}</h3>
+								<p class="item-desc">{item.description}</p>
+							</div>
+							<div class="item-date">标记于 {item.pubDate}</div>
+						</div>
+					</a>
+				))}
+			</div>
+		</main>
+		<Footer />
+	</body>
+</html>
