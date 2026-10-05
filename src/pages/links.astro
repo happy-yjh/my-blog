@@ -43,9 +43,9 @@ const categories = [
 				margin: 0 0 0.5rem 0;
 			}
 			.page-header p {
-				color: #94a3b8;
 				margin: 0;
 				font-size: 0.95rem;
+				opacity: 0.8;
 			}
 			.group-section {
 				margin-bottom: 2.5rem;
@@ -54,7 +54,7 @@ const categories = [
 				font-size: 1.15rem;
 				font-weight: 700;
 				margin-bottom: 1rem;
-				border-left: 3px solid #38bdf8;
+				border-left: 3px solid #0284c7;
 				padding-left: 0.6rem;
 			}
 			.links-grid {
@@ -62,11 +62,14 @@ const categories = [
 				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 				gap: 12px;
 			}
+
+			/* ☀️ 默认白天模式（浅色主题）样式 */
 			.link-card {
-				background: rgba(255, 255, 255, 0.04);
-				border: 1px solid rgba(255, 255, 255, 0.08);
+				background: #ffffff;
+				border: 1px solid rgba(0, 0, 0, 0.08);
+				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 				border-radius: 12px;
-				padding: 1rem;
+				padding: 1.1rem;
 				text-decoration: none;
 				color: inherit;
 				display: block;
@@ -74,20 +77,47 @@ const categories = [
 			}
 			.link-card:hover {
 				transform: translateY(-2px);
-				border-color: rgba(56, 189, 248, 0.4);
-				background: rgba(255, 255, 255, 0.07);
+				border-color: #0284c7;
+				box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
 			}
 			.link-name {
 				font-size: 1rem;
-				font-weight: 600;
-				margin: 0 0 4px 0;
-				color: #f1f5f9;
+				font-weight: 700;
+				margin: 0 0 6px 0;
+				color: #0f172a; /* 深灰黑字 */
 			}
 			.link-desc {
-				font-size: 0.82rem;
-				color: #94a3b8;
+				font-size: 0.85rem;
+				color: #475569; /* 次级深灰 */
 				margin: 0;
-				line-height: 1.4;
+				line-height: 1.5;
+			}
+
+			/* 🌙 暗色模式（.dark）下的自适应变色 */
+			:global(html.dark) .page-header h1 {
+				color: #f8fafc;
+			}
+			:global(html.dark) .page-header p {
+				color: #94a3b8;
+			}
+			:global(html.dark) .group-title {
+				color: #f1f5f9;
+				border-left-color: #38bdf8;
+			}
+			:global(html.dark) .link-card {
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				box-shadow: none;
+			}
+			:global(html.dark) .link-card:hover {
+				background: rgba(255, 255, 255, 0.08);
+				border-color: rgba(56, 189, 248, 0.4);
+			}
+			:global(html.dark) .link-name {
+				color: #f1f5f9; /* 纯净白字 */
+			}
+			:global(html.dark) .link-desc {
+				color: #94a3b8; /* 浅灰白字 */
 			}
 		</style>
 	</head>
