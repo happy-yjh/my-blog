@@ -33,7 +33,7 @@ try {
 		for (const block of itemBlocks) {
 			const itemContent = block.split('</item>')[0];
 
-			// 提取标题并剔除 CDATA
+			// 提取标题并彻底剥离 CDATA
 			const rawTitle = (itemContent.match(/<title>([\s\S]*?)<\/title>/)?.[1] || '')
 				.replace(/<!\[CDATA\[\vert{}\]\]>/g, '')
 				.trim();
@@ -47,16 +47,14 @@ try {
 			const rawDate = itemContent.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] || '';
 			const pubDate = rawDate ? new Date(rawDate).toLocaleDateString('zh-CN') : '';
 
-			// 提取描述内容
+			// 提取描述区内容
 			const rawDesc = itemContent.match(/<description>([\s\S]*?)<\/description>/)?.[1] || '';
 
-			// 提取海报并经由公共代理规避防盗链
+			// 提取原生豆瓣海报（使用 no-referrer 即可直连豆瓣官方 CDN，速度极快且不裂开）
 			let imgSrc = '';
 			const imgMatch = rawDesc.match(/src=["'](https?:\/\/[^"']+)["']/i);
 			if (imgMatch) {
-				let originalImg = imgMatch[1];
-				originalImg = originalImg.replace(/s_ratio_poster|sposter/, 'l_ratio_poster');
-				imgSrc = `https://images.weserv.nl/?url=${encodeURIComponent(originalImg)}`;
+				imgSrc = imgMatch[1].replace(/s_ratio_poster|sposter/, 'l_ratio_poster');
 			}
 
 			// 提取星级评分
@@ -66,12 +64,13 @@ try {
 				rating = ratingMatch[1];
 			}
 
-			// 清理短评
+			// 彻底清洗短评与杂质符号（杜绝 ]]> 出现）
 			let comment = rawDesc
-				.replace(/<[^>]+>/g, ' ')
 				.replace(/<!\[CDATA\[\vert{}\]\]>/g, '')
+				.replace(/<[^>]+>/g, ' ')
 				.replace(/推荐:\s*[^\s]+/g, '')
 				.replace(/&nbsp;/g, ' ')
+				.replace(/[\]>]/g, '') // 清理孤立的方括号和尖括号
 				.replace(/\s+/g, ' ')
 				.trim();
 
@@ -96,6 +95,7 @@ try {
 <html lang="zh-CN">
 	<head>
 		<BaseHead title={`豆瓣书影音 - ${SITE_TITLE}`} description="记录我的电影、图书与生活足迹" />
+		<!-- 核心安全声明：彻底解除豆瓣图片防盗链限制 -->
 		<meta name="referrer" content="no-referrer" />
 		<style>
 			main {
