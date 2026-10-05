@@ -1,0 +1,118 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+
+const categories = [
+	{
+		title: '常用开发文档',
+		links: [
+			{ name: 'Astro 官方中文站', desc: '新一代速度极快的内容型静态网站框架', url: 'https://docs.astro.build/zh-cn/' },
+			{ name: 'Cloudflare 文档', desc: '全球 CDN、边缘计算与安全服务体系', url: 'https://developers.cloudflare.com/' },
+			{ name: 'MDN Web 文档', desc: '最权威前端 HTML、CSS、JS 开发者标准手册', url: 'https://developer.mozilla.org/zh-CN/' },
+		]
+	},
+	{
+		title: '精选工具与设计资源',
+		links: [
+			{ name: 'Iconify', desc: '汇聚 10 万+ 开源矢量 SVG 图标库', url: 'https://iconify.design/' },
+			{ name: 'Tailwind CSS', desc: '原子化、高效现代化的 CSS 样式方案', url: 'https://tailwindcss.com/' },
+			{ name: 'Bangumi 番组计划', desc: '动画、游戏、图书二次元标记分享平台', url: 'https://bgm.tv' },
+		]
+	}
+];
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<BaseHead title={`网站推荐 - ${SITE_TITLE}`} description="精选实用的开发文档、工具与站长资源导航" />
+		<style>
+			main {
+				max-width: 860px;
+				margin: 2rem auto 4rem;
+				padding: 0 1.25rem;
+			}
+			.page-header {
+				margin-bottom: 2rem;
+			}
+			.page-header h1 {
+				font-size: 1.8rem;
+				font-weight: 800;
+				margin: 0 0 0.5rem 0;
+			}
+			.page-header p {
+				color: #94a3b8;
+				margin: 0;
+				font-size: 0.95rem;
+			}
+			.group-section {
+				margin-bottom: 2.5rem;
+			}
+			.group-title {
+				font-size: 1.15rem;
+				font-weight: 700;
+				margin-bottom: 1rem;
+				border-left: 3px solid #38bdf8;
+				padding-left: 0.6rem;
+			}
+			.links-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+				gap: 12px;
+			}
+			.link-card {
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 12px;
+				padding: 1rem;
+				text-decoration: none;
+				color: inherit;
+				display: block;
+				transition: all 0.2s ease;
+			}
+			.link-card:hover {
+				transform: translateY(-2px);
+				border-color: rgba(56, 189, 248, 0.4);
+				background: rgba(255, 255, 255, 0.07);
+			}
+			.link-name {
+				font-size: 1rem;
+				font-weight: 600;
+				margin: 0 0 4px 0;
+				color: #f1f5f9;
+			}
+			.link-desc {
+				font-size: 0.82rem;
+				color: #94a3b8;
+				margin: 0;
+				line-height: 1.4;
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<div class="page-header">
+				<h1>🌐 网站推荐</h1>
+				<p>记录与分享值得收藏的技术文档、实用工具与设计灵感。</p>
+			</div>
+
+			{categories.map((group) => (
+				<section class="group-section">
+					<div class="group-title">{group.title}</div>
+					<div class="links-grid">
+						{group.links.map((item) => (
+							<a href={item.url} target="_blank" rel="noopener noreferrer" class="link-card">
+								<h3 class="link-name">{item.name} ↗</h3>
+								<p class="link-desc">{item.desc}</p>
+							</a>
+						))}
+					</div>
+				</section>
+			))}
+		</main>
+		<Footer />
+	</body>
+</html>

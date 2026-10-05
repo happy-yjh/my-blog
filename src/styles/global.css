@@ -73,3 +73,7 @@ ul, ol {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+html.dark, html.dark body {
+	background-color: #0b0f17 !important;
+	color: #e2e8f0 !important;
+}

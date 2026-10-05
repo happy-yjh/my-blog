@@ -50,3 +50,19 @@ const { title, description, image = FallbackImage } = Astro.props;
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
+<!-- 🌙 主题防闪烁初始化脚本 (页面渲染前立即生效) -->
+<script is:inline>
+	const theme = (() => {
+		if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+			return localStorage.getItem('theme');
+		}
+		// 默认暗色模式，符合整体毛玻璃极客质感
+		return 'dark';
+	})();
+
+	if (theme === 'dark') {
+		document.documentElement.classList.add('dark');
+	} else {
+		document.documentElement.classList.remove('dark');
+	}
+</script>
