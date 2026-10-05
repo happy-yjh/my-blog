@@ -4,8 +4,8 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE } from '../consts';
 
-// 你的豆瓣个人 ID
-const DOUBAN_USER_ID = '2583694742'; 
+// 已绑定你的豆瓣个人 ID
+const DOUBAN_USER_ID = '2583695139'; 
 
 interface DoubanItem {
 	title: string;
@@ -22,57 +22,63 @@ try {
 	const rssUrl = `https://www.douban.com/feed/people/${DOUBAN_USER_ID}/interests`;
 	const res = await fetch(rssUrl, {
 		headers: {
-			'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+			'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 		}
 	});
 
 	if (res.ok) {
 		const xmlText = await res.text();
-		const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-		let match;
+		const itemBlocks = xmlText.split('<item>').slice(1);
 
-		while ((match = itemRegex.exec(xmlText)) !== null) {
-			const itemContent = match[1];
-			
-			// 提取标题并彻底剥离 CDATA 和多余符号
-			const titleMatch = itemContent.match(/<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/);
-			const linkMatch = itemContent.match(/<link>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/link>/);
-			const dateMatch = itemContent.match(/<pubDate>(.*?)<\/pubDate>/);
-			const descMatch = itemContent.match(/<description>([\s\S]*?)<\/description>/);
+		for (const block of itemBlocks) {
+			const itemContent = block.split('</item>')[0];
 
-			let title = titleMatch ? titleMatch[1].replace(/\]\]>/g, '').trim() : '';
-			const link = linkMatch ? linkMatch[1].replace(/\]\]>/g, '').trim() : '';
-			const pubDate = dateMatch ? new Date(dateMatch[1]).toLocaleDateString('zh-CN') : '';
-			const rawDesc = descMatch ? descMatch[1] : '';
+			// 提取标题并剔除 CDATA
+			const rawTitle = (itemContent.match(/<title>([\s\S]*?)<\/title>/)?.[1] || '')
+				.replace(/<!\[CDATA\[\vert{}\]\]>/g, '')
+				.trim();
 
-			// 提取海报并经由全局 CDN 缓存代理（彻底规避防盗链）
-			const imgMatch = rawDesc.match(/<img[^>]+src=["']([^"']+)["']/i);
+			// 提取条目链接
+			const link = (itemContent.match(/<link>([\s\S]*?)<\/link>/)?.[1] || '')
+				.replace(/<!\[CDATA\[\vert{}\]\]>/g, '')
+				.trim();
+
+			// 提取标记日期
+			const rawDate = itemContent.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] || '';
+			const pubDate = rawDate ? new Date(rawDate).toLocaleDateString('zh-CN') : '';
+
+			// 提取描述块
+			const rawDesc = itemContent.match(/<description>([\s\S]*?)<\/description>/)?.[1] || '';
+
+			// 提取海报并经由公共图片代理（解除防盗链）
 			let imgSrc = '';
+			const imgMatch = rawDesc.match(/src=["'](https?:\/\/[^"']+)["']/i);
 			if (imgMatch) {
 				let originalImg = imgMatch[1];
-				// 替换为高清大图尺寸
+				// 升级为高清尺寸
 				originalImg = originalImg.replace(/s_ratio_poster|sposter/, 'l_ratio_poster');
-				// 使用图片代理服务中转豆瓣防盗链图片
-				imgSrc = `https://images.weserv.nl/?url=${encodeURIComponent(originalImg)}&default=1`;
+				imgSrc = `https://images.weserv.nl/?url=${encodeURIComponent(originalImg)}`;
 			}
 
-			// 提取推荐星级与评价
+			// 提取评分
 			let rating = '';
 			const ratingMatch = rawDesc.match(/推荐:\s*([^\s<\]]+)/);
 			if (ratingMatch) {
 				rating = ratingMatch[1];
 			}
 
-			// 提取并清洗短评描述
+			// 清理短评内容
 			let comment = rawDesc
-				.replace(/<[^>]+>/g, '') // 去除 HTML 标签
-				.replace(/\]\]>/g, '')   // 去除 CDATA 尾巴
-				.replace(/推荐:\s*[^\s]+/g, '') // 移除单独的推荐字样
+				.replace(/<[^>]+>/g, ' ')
+				.replace(/<!\[CDATA\[\vert{}\]\]>/g, '')
+				.replace(/推荐:\s*[^\s]+/g, '')
+				.replace(/&nbsp;/g, ' ')
+				.replace(/\s+/g, ' ')
 				.trim();
 
-			if (title) {
+			if (rawTitle) {
 				items.push({
-					title,
+					title: rawTitle,
 					link,
 					pubDate,
 					rating,
@@ -91,6 +97,7 @@ try {
 <html lang="zh-CN">
 	<head>
 		<BaseHead title={`豆瓣书影音 - ${SITE_TITLE}`} description="记录我的电影、图书与生活足迹" />
+		<!-- 浏览器层彻底屏蔽 Referrer，支持豆瓣图片免阻断加载 -->
 		<meta name="referrer" content="no-referrer" />
 		<style>
 			main {
@@ -127,7 +134,7 @@ try {
 				color: #38bdf8;
 			}
 
-			/* 豆瓣卡片网格 */
+			/* 豆瓣卡片自适应网格 */
 			.douban-grid {
 				display: grid;
 				grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
@@ -161,7 +168,7 @@ try {
 
 			.cover-wrap {
 				width: 105px;
-				height: 145px;
+				min-height: 145px;
 				flex-shrink: 0;
 				background: #1e293b;
 				position: relative;
@@ -186,7 +193,7 @@ try {
 				font-size: 0.95rem;
 				font-weight: 700;
 				color: #0f172a;
-				margin: 0 0 4px 0;
+				margin: 0 0 6px 0;
 				line-height: 1.4;
 			}
 			:global(html.dark) .item-title {
@@ -198,8 +205,8 @@ try {
 				font-size: 0.72rem;
 				font-weight: 600;
 				color: #eab308;
-				background: rgba(234, 179, 8, 0.1);
-				padding: 1px 6px;
+				background: rgba(234, 179, 8, 0.12);
+				padding: 2px 7px;
 				border-radius: 4px;
 				margin-bottom: 6px;
 				width: fit-content;
@@ -242,7 +249,13 @@ try {
 					<a href={item.link} target="_blank" rel="noopener noreferrer" class="douban-card">
 						<div class="cover-wrap">
 							{item.imgSrc ? (
-								<img src={item.imgSrc} alt={item.title} class="douban-cover" loading="lazy" />
+								<img 
+									src={item.imgSrc} 
+									alt={item.title} 
+									class="douban-cover" 
+									loading="lazy" 
+									referrerpolicy="no-referrer"
+								/>
 							) : (
 								<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:0.75rem;">无封面</div>
 							)}
