@@ -4,17 +4,27 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE } from '../consts';
 
-// 已绑定你的豆瓣个人 ID
-const DOUBAN_USER_ID = '204088971'; 
+const DOUBAN_USER_ID = '204088971';
 
 interface DoubanItem {
 	title: string;
+	status: string;
 	link: string;
 	pubDate: string;
-	rating: string;
+	ratingLabel: string;
+	stars: number;
 	comment: string;
 	imgSrc: string;
 }
+
+// 豆瓣评级与星级映射
+const RATING_MAP: Record<string, { stars: number; label: string }> = {
+	'力荐': { stars: 5, label: '力荐' },
+	'推荐': { stars: 4, label: '推荐' },
+	'还行': { stars: 3, label: '还行' },
+	'较差': { stars: 2, label: '较差' },
+	'很差': { stars: 1, label: '很差' },
+};
 
 let items: DoubanItem[] = [];
 
@@ -33,33 +43,36 @@ try {
 		for (const block of itemBlocks) {
 			const itemContent = block.split('</item>')[0];
 
-			// 提取标题并彻底剥离 CDATA
+			// 提取原标题
 			const rawTitle = (itemContent.match(/<title>([\s\S]*?)<\/title>/)?.[1] || '')
 				.replace(/<!\[CDATA\[\vert{}\]\]>/g, '')
 				.trim();
+
+			// 拆解状态与真实作品名 (例如: "看过魔方小姐" -> 状态:"看过", 标题:"魔方小姐")
+			let status = '看过';
+			let title = rawTitle;
+			const statusMatch = rawTitle.match(/^(看过|想看|在看|读过|想读|在读|听过|想听|在听)/);
+			if (statusMatch) {
+				status = statusMatch[1];
+				title = rawTitle.replace(/^(看过|想看|在看|读过|想读|在读|听过|想听|在听)/, '').trim();
+			}
 
 			// 提取条目链接
 			const link = (itemContent.match(/<link>([\s\S]*?)<\/link>/)?.[1] || '')
 				.replace(/<!\[CDATA\[\vert{}\]\]>/g, '')
 				.trim();
 
-			// 提取标记日期
+			// 提取日期
 			const rawDate = itemContent.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] || '';
 			const pubDate = rawDate ? new Date(rawDate).toLocaleDateString('zh-CN') : '';
 
-			// 提取描述区内容
 			const rawDesc = itemContent.match(/<description>([\s\S]*?)<\/description>/)?.[1] || '';
 
-			// 提取原始海报地址
-			let rawImgUrl = '';
+			// 提取海报并在编译期安全下载转为 Base64
+			let imgSrc = '';
 			const imgMatch = rawDesc.match(/src=["'](https?:\/\/[^"']+)["']/i);
 			if (imgMatch) {
-				rawImgUrl = imgMatch[1].replace(/^http:\/\//i, 'https://');
-			}
-
-			// 核心突破：构建期由 Cloudflare 云端直接下载图片并转 Base64 内嵌，零反爬防盗链困扰
-			let imgSrc = '';
-			if (rawImgUrl) {
+				const rawImgUrl = imgMatch[1].replace(/^http:\/\//i, 'https://');
 				try {
 					const imgRes = await fetch(rawImgUrl, {
 						headers: {
@@ -73,19 +86,21 @@ try {
 						const mime = imgRes.headers.get('content-type') || 'image/jpeg';
 						imgSrc = `data:${mime};base64,${base64}`;
 					}
-				} catch (imgErr) {
-					console.error('抓取海报失败:', rawImgUrl, imgErr);
+				} catch (e) {
+					console.error('抓取海报失败:', rawImgUrl);
 				}
 			}
 
-			// 提取星级评分
-			let rating = '';
+			// 提取推荐评级并转星级
+			let ratingLabel = '';
+			let stars = 0;
 			const ratingMatch = rawDesc.match(/推荐:\s*([^\s<\]]+)/);
-			if (ratingMatch) {
-				rating = ratingMatch[1];
+			if (ratingMatch && RATING_MAP[ratingMatch[1]]) {
+				ratingLabel = RATING_MAP[ratingMatch[1]].label;
+				stars = RATING_MAP[ratingMatch[1]].stars;
 			}
 
-			// 彻底清洗短评与杂质符号
+			// 清理短评
 			let comment = rawDesc
 				.replace(/<!\[CDATA\[\vert{}\]\]>/g, '')
 				.replace(/<[^>]+>/g, ' ')
@@ -95,12 +110,14 @@ try {
 				.replace(/\s+/g, ' ')
 				.trim();
 
-			if (rawTitle) {
+			if (title) {
 				items.push({
-					title: rawTitle,
+					title,
+					status,
 					link,
 					pubDate,
-					rating,
+					ratingLabel,
+					stars,
 					comment,
 					imgSrc
 				});
@@ -118,29 +135,39 @@ try {
 		<BaseHead title={`豆瓣书影音 - ${SITE_TITLE}`} description="记录我的电影、图书与生活足迹" />
 		<style>
 			main {
-				max-width: 960px;
+				max-width: 980px;
 				margin: 1.5rem auto 4rem;
 				padding: 0 1rem;
 				box-sizing: border-box;
 			}
+
 			.page-header {
 				margin-bottom: 2rem;
 			}
 			.page-title {
-				font-size: 1.75rem;
+				font-size: 1.85rem;
 				font-weight: 800;
-				margin: 0 0 0.4rem 0;
+				margin: 0 0 0.5rem 0;
 				display: flex;
 				align-items: center;
-				gap: 8px;
+				gap: 10px;
+				letter-spacing: -0.02em;
+			}
+			.douban-badge {
+				background: #007722;
+				color: #ffffff;
+				font-size: 0.75rem;
+				padding: 2px 8px;
+				border-radius: 6px;
+				font-weight: 700;
 			}
 			.page-desc {
 				color: #64748b;
-				margin: 0 0 8px 0;
+				margin: 0 0 10px 0;
 				font-size: 0.95rem;
 			}
 			.page-meta {
-				font-size: 0.8rem;
+				font-size: 0.82rem;
 				color: #94a3b8;
 			}
 			.page-meta a {
@@ -151,47 +178,50 @@ try {
 				color: #38bdf8;
 			}
 
-			/* 豆瓣卡片自适应网格 */
+			/* 书影音卡片网格 */
 			.douban-grid {
 				display: grid;
-				grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+				grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 				gap: 16px;
 			}
 
-			/* ☀️ 白天模式卡片 */
+			/* ☀️️ 浅色模式卡片 */
 			.douban-card {
 				display: flex;
 				background: #ffffff;
 				border: 1px solid rgba(0, 0, 0, 0.08);
-				border-radius: 12px;
+				border-radius: 14px;
 				overflow: hidden;
 				text-decoration: none;
 				color: inherit;
-				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-				transition: all 0.2s ease;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+				transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+				position: relative;
 			}
 			.douban-card:hover {
-				transform: translateY(-3px);
-				border-color: #0284c7;
-				box-shadow: 0 6px 16px rgba(2, 132, 199, 0.12);
+				transform: translateY(-4px);
+				border-color: #007722;
+				box-shadow: 0 10px 24px rgba(0, 119, 34, 0.12);
 			}
 
-			/* 🌙 暗黑模式卡片适配 */
+			/* 🌙 暗黑模式卡片 */
 			:global(html.dark) .douban-card {
 				background: rgba(22, 27, 34, 0.75) !important;
 				border-color: rgba(255, 255, 255, 0.08) !important;
-				box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
 			}
 			:global(html.dark) .douban-card:hover {
-				border-color: rgba(56, 189, 248, 0.4) !important;
-				background: rgba(22, 27, 34, 0.95) !important;
+				border-color: rgba(56, 189, 248, 0.45) !important;
+				background: rgba(30, 36, 46, 0.85) !important;
+				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
 			}
 
+			/* 海报图容器 */
 			.cover-wrap {
-				width: 105px;
-				min-height: 145px;
+				width: 108px;
+				min-height: 154px;
 				flex-shrink: 0;
-				background: #1e293b;
+				background: #0f172a;
 				position: relative;
 				overflow: hidden;
 			}
@@ -200,57 +230,120 @@ try {
 				height: 100%;
 				object-fit: cover;
 				display: block;
+				transition: transform 0.3s ease;
+			}
+			.douban-card:hover .douban-cover {
+				transform: scale(1.05);
 			}
 
+			/* 右侧信息区 */
 			.info-wrap {
-				padding: 12px;
+				padding: 14px 14px 12px 14px;
 				display: flex;
 				flex-direction: column;
 				justify-content: space-between;
 				flex: 1;
 				min-width: 0;
 			}
+
+			.header-row {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				margin-bottom: 6px;
+			}
+			.status-tag {
+				font-size: 0.7rem;
+				font-weight: 700;
+				padding: 2px 7px;
+				border-radius: 6px;
+				white-space: nowrap;
+			}
+			.status-tag.seen {
+				background: rgba(16, 185, 129, 0.15);
+				color: #10b981;
+			}
+			.status-tag.wish {
+				background: rgba(14, 165, 233, 0.15);
+				color: #0284c7;
+			}
+			:global(html.dark) .status-tag.wish {
+				color: #38bdf8;
+			}
+
 			.item-title {
-				font-size: 0.95rem;
+				font-size: 1rem;
 				font-weight: 700;
 				color: #0f172a;
-				margin: 0 0 6px 0;
-				line-height: 1.4;
+				margin: 0;
+				line-height: 1.35;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
 			}
 			:global(html.dark) .item-title {
-				color: #f1f5f9;
+				color: #f8fafc;
 			}
 
-			.rating-pill {
-				display: inline-block;
-				font-size: 0.72rem;
+			/* ⭐ 星级评分 */
+			.star-rating {
+				display: flex;
+				align-items: center;
+				gap: 4px;
+				margin-top: 6px;
+			}
+			.stars {
+				display: inline-flex;
+				gap: 2px;
+				color: #cbd5e1;
+				font-size: 0.85rem;
+				line-height: 1;
+			}
+			.star.filled {
+				color: #f59e0b; /* 金黄色星星 */
+			}
+			.rating-text {
+				font-size: 0.75rem;
 				font-weight: 600;
-				color: #eab308;
-				background: rgba(234, 179, 8, 0.12);
-				padding: 2px 7px;
-				border-radius: 4px;
-				margin-bottom: 6px;
-				width: fit-content;
+				color: #f59e0b;
+				margin-left: 2px;
 			}
 
+			/* 短评 */
 			.item-comment {
-				font-size: 0.78rem;
+				font-size: 0.8rem;
 				color: #64748b;
-				margin: 0;
+				margin: 8px 0 0 0;
 				display: -webkit-box;
 				-webkit-line-clamp: 2;
 				-webkit-box-orient: vertical;
 				overflow: hidden;
 				line-height: 1.5;
+				font-style: italic;
 			}
 			:global(html.dark) .item-comment {
 				color: #94a3b8;
 			}
 
-			.item-date {
+			.item-footer {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
 				font-size: 0.72rem;
 				color: #94a3b8;
-				margin-top: 8px;
+				margin-top: 10px;
+				padding-top: 8px;
+				border-top: 1px dashed rgba(0, 0, 0, 0.06);
+			}
+			:global(html.dark) .item-footer {
+				border-top-color: rgba(255, 255, 255, 0.06);
+				color: #64748b;
+			}
+
+			@media (max-width: 640px) {
+				.douban-grid {
+					grid-template-columns: 1fr;
+				}
 			}
 		</style>
 	</head>
@@ -258,10 +351,13 @@ try {
 		<Header />
 		<main>
 			<div class="page-header">
-				<h1 class="page-title">🎬 豆瓣书影音</h1>
-				<p class="page-desc">电影、阅读与生活随记</p>
+				<h1 class="page-title">
+					🎬 豆瓣书影音
+					<span class="douban-badge">DOUBAN</span>
+				</h1>
+				<p class="page-desc">记录我看过的光影、翻过的书页与生活注脚</p>
 				<div class="page-meta">
-					数据来源：<a href={`https://www.douban.com/people/${DOUBAN_USER_ID}/`} target="_blank" rel="noopener noreferrer">我的豆瓣个人主页 ↗</a>
+					同步自个人主页：<a href={`https://www.douban.com/people/${DOUBAN_USER_ID}/`} target="_blank" rel="noopener noreferrer">@{DOUBAN_USER_ID} ↗</a>
 				</div>
 			</div>
 
@@ -282,11 +378,29 @@ try {
 						</div>
 						<div class="info-wrap">
 							<div>
-								<h3 class="item-title">{item.title}</h3>
-								{item.rating && <div class="rating-pill">推荐: {item.rating}</div>}
-								{item.comment && <p class="item-comment">{item.comment}</p>}
+								<div class="header-row">
+									<span class={`status-tag ${item.status.includes('想') ? 'wish' : 'seen'}`}>{item.status}</span>
+									<h3 class="item-title" title={item.title}>{item.title}</h3>
+								</div>
+
+								{item.stars > 0 && (
+									<div class="star-rating">
+										<div class="stars">
+											{Array.from({ length: 5 }).map((_, i) => (
+												<span class={i < item.stars ? 'star filled' : 'star'}>★</span>
+											))}
+										</div>
+										<span class="rating-text">{item.ratingLabel}</span>
+									</div>
+								)}
+
+								{item.comment && <p class="item-comment">“{item.comment}”</p>}
 							</div>
-							<div class="item-date">标记于 {item.pubDate}</div>
+
+							<div class="item-footer">
+								<span>标记于 {item.pubDate}</span>
+								<span>详情 ↗</span>
+							</div>
 						</div>
 					</a>
 				))}
