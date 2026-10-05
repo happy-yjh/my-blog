@@ -1,4 +1,5 @@
 ---
+import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE } from '../consts';
@@ -49,17 +50,15 @@ try {
 			// 提取描述区内容
 			const rawDesc = itemContent.match(/<description>([\s\S]*?)<\/description>/)?.[1] || '';
 
-			// 提取豆瓣海报
+			// 提取豆瓣原始图片并转换为安全跨域镜像
 			let imgSrc = '';
 			const imgMatch = rawDesc.match(/src=["'](https?:\/\/[^"']+)["']/i);
 			if (imgMatch) {
-				let originalImg = imgMatch[1];
-				// 强制升级为 https 并切换为高清大图尺寸
-				originalImg = originalImg.replace(/^http:\/\//i, 'https://');
+				let originalImg = imgMatch[1].replace(/^http:\/\//i, 'https://');
 				originalImg = originalImg.replace(/s_ratio_poster|sposter/, 'l_ratio_poster');
 				
-				// 核心：使用 Cloudflare 兼容的 CDN 代理，彻底规避豆瓣 403 阻断与混合内容拦截
-				imgSrc = `https://images.weserv.nl/?url=${encodeURIComponent(originalImg)}&default=1`;
+				// 替换为完全解除防盗链的豆瓣专用公共 CDN 缓存源
+				imgSrc = originalImg.replace(/https?:\/\/img\d?\.doubanio\.com/, 'https://douban.img.eryajf.net');
 			}
 
 			// 提取星级评分
@@ -69,7 +68,7 @@ try {
 				rating = ratingMatch[1];
 			}
 
-			// 彻底清洗短评与杂质符号
+			// 清理短评
 			let comment = rawDesc
 				.replace(/<!\[CDATA\[\vert{}\]\]>/g, '')
 				.replace(/<[^>]+>/g, ' ')
@@ -99,13 +98,9 @@ try {
 <!doctype html>
 <html lang="zh-CN">
 	<head>
-		<meta charset="utf-8" />
-		<!-- 必须作为 head 的首个属性声明：彻底阻断浏览器向外部图片发送 Referrer -->
+		<!-- 引入 BaseHead，彻底恢复全局暗黑模式与防闪烁逻辑 -->
+		<BaseHead title={`豆瓣书影音 - ${SITE_TITLE}`} description="记录我的电影、图书与生活足迹" />
 		<meta name="referrer" content="no-referrer" />
-		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<title>豆瓣书影音 - {SITE_TITLE}</title>
-		
 		<style>
 			main {
 				max-width: 960px;
@@ -141,12 +136,14 @@ try {
 				color: #38bdf8;
 			}
 
-			/* 豆瓣卡片网格自适应 */
+			/* 豆瓣卡片自适应网格 */
 			.douban-grid {
 				display: grid;
 				grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
 				gap: 16px;
 			}
+
+			/* ☀️ 白天模式卡片 */
 			.douban-card {
 				display: flex;
 				background: #ffffff;
@@ -163,14 +160,16 @@ try {
 				border-color: #0284c7;
 				box-shadow: 0 6px 16px rgba(2, 132, 199, 0.12);
 			}
+
+			/* 🌙 暗黑模式卡片适配 */
 			:global(html.dark) .douban-card {
-				background: rgba(22, 27, 34, 0.65);
-				border-color: rgba(255, 255, 255, 0.08);
-				box-shadow: none;
+				background: rgba(22, 27, 34, 0.75) !important;
+				border-color: rgba(255, 255, 255, 0.08) !important;
+				box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
 			}
 			:global(html.dark) .douban-card:hover {
-				border-color: rgba(56, 189, 248, 0.4);
-				background: rgba(22, 27, 34, 0.9);
+				border-color: rgba(56, 189, 248, 0.4) !important;
+				background: rgba(22, 27, 34, 0.95) !important;
 			}
 
 			.cover-wrap {
@@ -260,12 +259,11 @@ try {
 									src={item.imgSrc} 
 									alt={item.title} 
 									class="douban-cover" 
-									loading="lazy"
+									loading="lazy" 
 									referrerpolicy="no-referrer"
-									onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'105\' height=\'145\' fill=\'%231e293b\'><rect width=\'100%\' height=\'100%\'/><text x=\'50%\' y=\'50%\' fill=\'%2364748b\' font-size=\'12\' text-anchor=\'middle\' dy=\'.3em\'>暂无封面</text></svg>';"
 								/>
 							) : (
-								<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:0.75rem;">暂无封面</div>
+								<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:0.75rem;">无封面</div>
 							)}
 						</div>
 						<div class="info-wrap">
