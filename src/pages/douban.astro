@@ -4,6 +4,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE_TITLE } from '../consts';
 
+// 已绑定你的豆瓣个人 ID
 const DOUBAN_USER_ID = '204088971'; 
 
 interface DoubanItem {
@@ -32,35 +33,59 @@ try {
 		for (const block of itemBlocks) {
 			const itemContent = block.split('</item>')[0];
 
+			// 提取标题并彻底剥离 CDATA
 			const rawTitle = (itemContent.match(/<title>([\s\S]*?)<\/title>/)?.[1] || '')
 				.replace(/<!\[CDATA\[\vert{}\]\]>/g, '')
 				.trim();
 
+			// 提取条目链接
 			const link = (itemContent.match(/<link>([\s\S]*?)<\/link>/)?.[1] || '')
 				.replace(/<!\[CDATA\[\vert{}\]\]>/g, '')
 				.trim();
 
+			// 提取标记日期
 			const rawDate = itemContent.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] || '';
 			const pubDate = rawDate ? new Date(rawDate).toLocaleDateString('zh-CN') : '';
 
+			// 提取描述区内容
 			const rawDesc = itemContent.match(/<description>([\s\S]*?)<\/description>/)?.[1] || '';
 
-			// 提取豆瓣原始图片，走本站专属图片缓存代理
-			let imgSrc = '';
+			// 提取原始海报地址
+			let rawImgUrl = '';
 			const imgMatch = rawDesc.match(/src=["'](https?:\/\/[^"']+)["']/i);
 			if (imgMatch) {
-				let originalImg = imgMatch[1].replace(/^http:\/\//i, 'https://');
-				originalImg = originalImg.replace(/s_ratio_poster|sposter/, 'l_ratio_poster');
-				// 走站内代理，彻底解除第三方阻断
-				imgSrc = `/api/img?url=${encodeURIComponent(originalImg)}`;
+				rawImgUrl = imgMatch[1].replace(/^http:\/\//i, 'https://');
 			}
 
+			// 核心突破：构建期由 Cloudflare 云端直接下载图片并转 Base64 内嵌，零反爬防盗链困扰
+			let imgSrc = '';
+			if (rawImgUrl) {
+				try {
+					const imgRes = await fetch(rawImgUrl, {
+						headers: {
+							'Referer': 'https://movie.douban.com/',
+							'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+						}
+					});
+					if (imgRes.ok) {
+						const buf = await imgRes.arrayBuffer();
+						const base64 = Buffer.from(buf).toString('base64');
+						const mime = imgRes.headers.get('content-type') || 'image/jpeg';
+						imgSrc = `data:${mime};base64,${base64}`;
+					}
+				} catch (imgErr) {
+					console.error('抓取海报失败:', rawImgUrl, imgErr);
+				}
+			}
+
+			// 提取星级评分
 			let rating = '';
 			const ratingMatch = rawDesc.match(/推荐:\s*([^\s<\]]+)/);
 			if (ratingMatch) {
 				rating = ratingMatch[1];
 			}
 
+			// 彻底清洗短评与杂质符号
 			let comment = rawDesc
 				.replace(/<!\[CDATA\[\vert{}\]\]>/g, '')
 				.replace(/<[^>]+>/g, ' ')
@@ -126,12 +151,14 @@ try {
 				color: #38bdf8;
 			}
 
+			/* 豆瓣卡片自适应网格 */
 			.douban-grid {
 				display: grid;
 				grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
 				gap: 16px;
 			}
 
+			/* ☀️ 白天模式卡片 */
 			.douban-card {
 				display: flex;
 				background: #ffffff;
@@ -149,6 +176,7 @@ try {
 				box-shadow: 0 6px 16px rgba(2, 132, 199, 0.12);
 			}
 
+			/* 🌙 暗黑模式卡片适配 */
 			:global(html.dark) .douban-card {
 				background: rgba(22, 27, 34, 0.75) !important;
 				border-color: rgba(255, 255, 255, 0.08) !important;
